@@ -346,14 +346,6 @@
           }, 3000);
         },
   
-        goToPaymentPage() {
-          if (this.cart.length === 0) {
-            alert('Sepetiniz boş. Lütfen ürün ekleyin.');
-            return;
-          }
-          window.location.href = "#payment";
-        },
-  
         submitOrder() {
           alert('Siparişiniz alınmıştır. Teşekkür ederiz!');
           this.cart = [];
@@ -435,7 +427,7 @@
     <li>Mobil Ödeme</li>
   </ul>
   <h3>İsim ve Adres Bilgileri</h3>
-  <form id="orderForm" @submit.prevent="submitOrder()">
+  <form id="orderForm" @submit.prevent="goToPaymentPage()">
     <label for="name">Ad Soyad</label>
     <input type="text" id="name" name="name" required placeholder="Adınızı ve soyadınızı girin" />
     <label for="email">E-posta</label>

@@ -69,32 +69,32 @@ function cartApp() {
         alert('Sepetiniz boş. Lütfen ürün ekleyin.');
         return;
       }
-
+    
       const form = document.getElementById('orderForm');
       const formData = new FormData(form);
-
+    
       const name = formData.get('name');
       const email = formData.get('email');
       const address = formData.get('address');
       const phone = formData.get('phone');
       const items = this.cart;
       const total = this.totalPrice() + this.getShippingCost();
-
+    
       localStorage.setItem("orderInfo", JSON.stringify({
         name, email, phone, address,
         total: total.toFixed(2),
         items: this.cart.map(item => `${item.name} (${item.size}/${item.color}) x${item.qty}`).join(", ")
       }));
-      
+    
       try {
         const response = await fetch('/.netlify/functions/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, phone, address, items, total })
         });
-
+    
         const data = await response.json();
-
+    
         if (data.checkoutFormContent) {
           const popup = window.open('', '_blank');
           popup.document.open();
@@ -107,12 +107,6 @@ function cartApp() {
         console.error('Ödeme hatası:', err);
         alert('Ödeme sırasında bir hata oluştu.');
       }
-    },
-
-    submitOrder() {
-      alert('Siparişiniz alınmıştır. Teşekkür ederiz!');
-      this.cart = [];
-      localStorage.setItem('cart', JSON.stringify(this.cart));
     }
   };
 }
