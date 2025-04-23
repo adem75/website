@@ -1,3 +1,4 @@
+// app.js (güncellenmiş versiyon)
 function cartApp() {
   return {
     cart: JSON.parse(localStorage.getItem('cart') || '[]'),
@@ -63,12 +64,43 @@ function cartApp() {
       }, 3000);
     },
 
-    goToPaymentPage() {
+    async goToPaymentPage() {
       if (this.cart.length === 0) {
         alert('Sepetiniz boş. Lütfen ürün ekleyin.');
         return;
       }
-      window.location.href = "#payment";
+
+      const form = document.getElementById('orderForm');
+      const formData = new FormData(form);
+
+      const name = formData.get('name');
+      const email = formData.get('email');
+      const address = formData.get('address');
+      const phone = formData.get('phone');
+      const items = this.cart;
+      const total = this.totalPrice() + this.getShippingCost();
+
+      try {
+        const response = await fetch('/.netlify/functions/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, phone, address, items, total })
+        });
+
+        const data = await response.json();
+
+        if (data.checkoutFormContent) {
+          const popup = window.open('', '_blank');
+          popup.document.open();
+          popup.document.write(data.checkoutFormContent);
+          popup.document.close();
+        } else {
+          alert('Ödeme başlatılamadı: ' + (data.error || 'Bilinmeyen hata'));
+        }
+      } catch (err) {
+        console.error('Ödeme hatası:', err);
+        alert('Ödeme sırasında bir hata oluştu.');
+      }
     },
 
     submitOrder() {
