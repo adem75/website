@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="MutafLingerie, zarif ve kaliteli iç giyim koleksiyonuyla sizi özel hissettiren markanız.">
+  <title>MutafLingerie | Zarif İç Giyim Koleksiyonu</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Playfair+Display&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <div x-show="showToast" x-text="toastMessage" class="toast" :class="toastType"></div>
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .cart-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #f06292;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 50px;
+      cursor: pointer;
+      z-index: 1001;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cart-badge {
+      background-color: white;
+      color: #f06292;
+      padding: 2px 8px;
+      font-weight: bold;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .cart-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 360px;
+      height: 100%;
+      background: #fff;
+      box-shadow: -3px 0 10px rgba(0, 0, 0, 0.1);
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+      z-index: 1000;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .cart-panel.open {
+      transform: translateX(0);
+    }
+
+    .cart-item {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    .cart-item img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .cart-item-details {
+      flex: 1;
+    }
+
+    .cart-total, .cart-summary {
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .complete-order-btn {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f06292;
+      color: white;
+      border: none;
+      width: 100%;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    
+  </style>
+</head>
+
+<body x-data="cartApp()">
+
+  <header>
+    <div class="logo">MutafLingerie</div>
+    <nav>
+      <a href="#about">Hakkında</a>
+      <a href="#products">Ürünler</a>
+      <a href="#payment">Ödeme</a>
+    </nav>
+  </header>
+  
+  <!-- Sepet Butonu -->
+  <button class="cart-button" @click="toggleCart()">
+    🛍️ Sepet
+    <span class="cart-badge" x-show="cart.length > 0" x-text="cart.length"></span>
+  </button>
+
+  <!-- Sağdan Açılan Sepet Paneli -->
+  <div class="cart-panel" :class="{ 'open': isCartOpen }">
+    <h3>Sepetiniz</h3>
+
+    <template x-if="cart.length === 0">
+      <p>Sepetiniz boş.</p>
+    </template>
+
+    <template x-for="(item, index) in cart" :key="index">
+      <div class="cart-item">
+        <img :src="item.image" alt="Ürün">
+        <div class="cart-item-details">
+          <strong x-text="item.name"></strong>
+          <div>Beden: <span x-text="item.size"></span></div>
+          <div>Renk: <span x-text="item.color"></span></div>
+          <div>Fiyat: <span x-text="(item.price * item.qty).toFixed(2) + '₺'"></span></div>
+          <div>
+            <button @click="decrease(item)">-</button>
+            <span x-text="item.qty"></span>
+            <button @click="increase(item)">+</button>
+          </div>
+          <button @click="removeFromCart(index)" style="color: red;">Ürünü Sil</button>
+        </div>
+      </div>
+    </template>
+
+    <div class="cart-total">
+      Toplam: <span x-text="totalPrice().toFixed(2) + '₺'"></span>
+    </div>
+
+    <div class="cart-summary">
+      <template x-if="getShippingCost() === 0">
+        <span>Kargo: Ücretsiz</span>
+      </template>
+      <template x-if="getShippingCost() > 0">
+        <span>Kargo: 30₺</span>
+      </template>
+    </div>
+
+    <div class="cart-summary">
+      <span>Genel Toplam: 
+        <span x-text="(totalPrice() + getShippingCost()).toFixed(2) + '₺'"></span>
+      </span>
+    </div>
+
+    <button class="complete-order-btn" :disabled="cart.length === 0" @click="goToPaymentPage()">Siparişi Tamamla</button>
+  </div>
+  <section id="products" class="products">
+    <div class="product" x-data="productComponent('Dantel Lingerie Set', 349.99, 'Bu zarif dantel lingerie seti, şıklığı ve rahatlığı bir araya getiriyor.', 'https://i.imgur.com/i49g1qw.jpeg', true, true)">
+      <template x-if="product">
+        <div>
+          <img :src="product.image" :alt="product.name" />
+          <h3 x-text="product.name"></h3>
+          <p class="price" x-text="product.price + '₺'"></p>
+          <p class="description" x-text="product.description"></p>
+          <div class="tags">
+            <span class="tag" x-text="product.isNew ? 'Yeni' : ''"></span>
+            <span class="tag" x-text="product.isPopular ? 'Popüler' : ''"></span>
+          </div>
+          <div class="product-actions">
+            <label>
+              Beden:
+              <select x-model="product.selectedSize">
+                <option value="">Beden Seç</option>
+                <option>S</option>
+                <option>M</option>
+                <option>L</option>
+                <option>XL</option>
+                <option>XXL</option>
+              </select>
+            </label>
+            <label>
+              Renk:
+              <select x-model="product.selectedColor">
+                <option value="">Renk Seç</option>
+                <option>Sarı</option>
+                <option>Mavi</option>
+                <option>Kırmızı</option>
+              </select>
+            </label>
+            <button @click="addToCart(product.name, product.price, product.image, product.selectedSize, product.selectedColor)">
+              Sepete Ekle
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+  
+    <div class="product" x-data="productComponent('Romantik Dantel Set', 379.99, 'Kendinizi özel hissettirecek yumuşak ve şık bir tasarım.', 'https://i.imgur.com/i49g1qw.jpeg', false, true)">
+      <template x-if="product">
+        <div>
+          <img :src="product.image" :alt="product.name" />
+          <h3 x-text="product.name"></h3>
+          <p class="price" x-text="product.price + '₺'"></p>
+          <p class="description" x-text="product.description"></p>
+          <div class="tags">
+            <span class="tag" x-text="product.isNew ? 'Yeni' : ''"></span>
+            <span class="tag" x-text="product.isPopular ? 'Popüler' : ''"></span>
+          </div>
+          <div class="product-actions">
+            <label>
+              Beden:
+              <select x-model="product.selectedSize">
+                <option value="">Beden Seç</option>
+                <option>S</option>
+                <option>M</option>
+                <option>L</option>
+                <option>XL</option>
+                <option>XXL</option>
+              </select>
+            </label>
+            <label>
+              Renk:
+              <select x-model="product.selectedColor">
+                <option value="">Renk Seç</option>
+                <option>Sarı</option>
+                <option>Mavi</option>
+                <option>Kırmızı</option>
+              </select>
+            </label>
+            <button @click="addToCart(product.name, product.price, product.image, product.selectedSize, product.selectedColor)">
+              Sepete Ekle
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <div class="product" x-data="productComponent('Romantik Dantel Set', 379.99, 'Kendinizi özel hissettirecek yumuşak ve şık bir tasarım.', 'https://i.imgur.com/i49g1qw.jpeg', false, true)">
+      <template x-if="product">
+        <div>
+          <img :src="product.image" :alt="product.name" />
+          <h3 x-text="product.name"></h3>
+          <p class="price" x-text="product.price + '₺'"></p>
+          <p class="description" x-text="product.description"></p>
+          <div class="tags">
+            <span class="tag" x-text="product.isNew ? 'Yeni' : ''"></span>
+            <span class="tag" x-text="product.isPopular ? 'Popüler' : ''"></span>
+          </div>
+          <div class="product-actions">
+            <label>
+              Beden:
+              <select x-model="product.selectedSize">
+                <option value="">Beden Seç</option>
+                <option>S</option>
+                <option>M</option>
+                <option>L</option>
+                <option>XL</option>
+                <option>XXL</option>
+              </select>
+            </label>
+            <button @click="addToCart(product.name, product.price, product.image, product.selectedSize, product.selectedColor)">
+              Sepete Ekle
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <script>
+    function cartApp() {
+      return {
+        cart: JSON.parse(localStorage.getItem('cart') || '[]'),
+        isCartOpen: false,
+        showToast: false,
+        toastMessage: "",
+        toastType: "success",
+  
+        toggleCart() {
+          this.isCartOpen = !this.isCartOpen;
+        },
+  
+        addToCart(name, price, image, size, color) {
+          if (!size || !color) {
+            this.showToastMessage("Lütfen beden ve renk seçiniz.", "error");
+            return;
+          }
+  
+          const existing = this.cart.find(item => item.name === name && item.size === size && item.color === color);
+          if (existing) {
+            existing.qty += 1;
+            this.showToastMessage(`${name} (${size}/${color}) tekrar sepete eklendi.`, "info");
+          } else {
+            this.cart.push({ name, price, image, size, color, qty: 1 });
+            this.showToastMessage(`${name} (${size}/${color}) sepete eklendi.`, "success");
+          }
+  
+          localStorage.setItem('cart', JSON.stringify(this.cart));
+          this.isCartOpen = true;
+        },
+  
+        removeFromCart(index) {
+          const removedItem = this.cart[index];
+          this.cart.splice(index, 1);
+          localStorage.setItem('cart', JSON.stringify(this.cart));
+          this.showToastMessage(`${removedItem.name} (${removedItem.size}/${removedItem.color}) sepetten çıkarıldı.`, "error");
+        },
+  
+        increase(item) {
+          item.qty += 1;
+          localStorage.setItem('cart', JSON.stringify(this.cart));
+        },
+  
+        decrease(item) {
+          if (item.qty > 1) item.qty -= 1;
+          localStorage.setItem('cart', JSON.stringify(this.cart));
+        },
+  
+        totalPrice() {
+          return this.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+        },
+  
+        getShippingCost() {
+          return this.totalPrice() >= 1000 ? 0 : 30;
+        },
+  
+        showToastMessage(message, type) {
+          this.toastMessage = message;
+          this.toastType = type;
+          this.showToast = true;
+          setTimeout(() => {
+            this.showToast = false;
+          }, 3000);
+        },
+  
+        goToPaymentPage() {
+          if (this.cart.length === 0) {
+            alert('Sepetiniz boş. Lütfen ürün ekleyin.');
+            return;
+          }
+          window.location.href = "#payment";
+        },
+  
+        submitOrder() {
+          alert('Siparişiniz alınmıştır. Teşekkür ederiz!');
+          this.cart = [];
+          localStorage.setItem('cart', JSON.stringify(this.cart));
+        }
+      };
+    }
+  
+    function productComponent(name, price, description, image, isNew, isPopular) {
+      return {
+        product: {
+          name,
+          price,
+          description,
+          image,
+          isNew,
+          isPopular,
+          selectedSize: '',
+          selectedColor: ''
+        }
+      };
+    }
+  </script>
+  
+  <!-- Sağdan Açılır Sepet Paneli -->
+<div class="cart-panel" :class="{ open: isCartOpen }">
+  <div class="cart-header">
+    <h3>Sepetiniz</h3>
+    <button class="close-btn" @click="toggleCart()">✖</button>
+  </div>
+
+  <div class="cart-body">
+    <template x-if="cart.length === 0">
+      <p class="empty-cart">Sepetiniz boş.</p>
+    </template>
+
+    <template x-for="(item, index) in cart" :key="index">
+      <div class="cart-item">
+        <img :src="item.image" alt="Ürün" class="cart-item-img">
+        <div class="cart-item-details">
+          <strong x-text="item.name"></strong>
+          <p><span x-text="'Beden: ' + item.size"></span> | <span x-text="'Renk: ' + item.color"></span></p>
+          <p x-text="item.price.toFixed(2) + '₺'"></p>
+          <div class="qty-controls">
+            <button @click="decrease(item)">−</button>
+            <span x-text="item.qty"></span>
+            <button @click="increase(item)">+</button>
+            <button class="remove" @click="removeFromCart(index)">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <div class="cart-footer" x-show="cart.length > 0">
+    <p><strong>Toplam:</strong> <span x-text="totalPrice().toFixed(2) + '₺'"></span></p>
+    <p><strong>Kargo:</strong>
+      <span x-text="getShippingCost() === 0 ? 'Ücretsiz' : '30₺'"></span>
+    </p>
+    <p><strong>Genel Toplam:</strong>
+      <span x-text="(totalPrice() + getShippingCost()).toFixed(2) + '₺'"></span>
+    </p>
+    <button class="complete-order-btn" @click="goToPaymentPage()">Siparişi Tamamla</button>
+  </div>
+</div>
+
+<section id="about" class="about">
+  <h2>Hakkımızda</h2>
+  <p>MutafLingerie olarak zarafet, konfor ve kaliteyi ön planda tutan iç giyim ürünleri sunuyoruz. Müşteri memnuniyetini en üst düzeyde tutarak, kadınların kendilerini özel hissetmelerini sağlamayı hedefliyoruz.</p>
+</section>
+
+<section id="payment" class="payment">
+  <h2>Ödeme Yöntemleri</h2>
+  <ul>
+    <li>Kredi Kartı</li>
+    <li>Banka Kartı</li>
+    <li>Kapıda Ödeme</li>
+    <li>EFT / Havale</li>
+    <li>Mobil Ödeme</li>
+  </ul>
+  <h3>İsim ve Adres Bilgileri</h3>
+  <form id="orderForm" @submit.prevent="submitOrder()">
+    <label for="name">Ad Soyad</label>
+    <input type="text" id="name" name="name" required placeholder="Adınızı ve soyadınızı girin" />
+    <label for="email">E-posta</label>
+    <input type="email" id="email" name="email" required placeholder="E-posta adresinizi girin" />
+    <label for="address">Adres</label>
+    <textarea id="address" name="address" required placeholder="Adresinizi girin" rows="4"></textarea>
+    <label for="phone">Telefon Numarası</label>
+    <input type="tel" id="phone" name="phone" required placeholder="Telefon numaranızı girin" />
+    <button type="submit" class="submit-order-btn">Siparişi Tamamla</button>
+  </form>
+</section>
+
+<footer>
+  <p>&copy; 2025 Mutaf İç Giyim. Tüm hakları saklıdır. Tasarım & Kodlama: Sensin özelsinn 💖</p>
+</footer>
+
+<!-- Sepet Stili -->
