@@ -80,6 +80,12 @@ function cartApp() {
       const items = this.cart;
       const total = this.totalPrice() + this.getShippingCost();
 
+      localStorage.setItem("orderInfo", JSON.stringify({
+        name, email, phone, address,
+        total: total.toFixed(2),
+        items: this.cart.map(item => `${item.name} (${item.size}/${item.color}) x${item.qty}`).join(", ")
+      }));
+      
       try {
         const response = await fetch('/.netlify/functions/checkout', {
           method: 'POST',

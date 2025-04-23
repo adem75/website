@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teşekkürler | MutafLingerie</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const orderInfo = JSON.parse(localStorage.getItem("orderInfo"));
+      if (!orderInfo) return;
+
+      emailjs.init("r7x9IZyWP07Fo6ZWr"); // public key
+
+      emailjs.send("service_rh8q2se", "__ejs-test-mail-service__", orderInfo)
+        .then(() => console.log("E-posta gönderildi."))
+        .catch((err) => console.error("E-posta hatası:", err));
+
+      localStorage.removeItem("orderInfo");
+      localStorage.removeItem("cart");
+    });
+  </script>
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+      background-color: #fff5f9;
+    }
+    h1 {
+      color: #d63384;
+      font-size: 2rem;
+    }
+    p {
+      font-size: 1.1rem;
+      color: #444;
+    }
+    a {
+      margin-top: 20px;
+      text-decoration: none;
+      color: white;
+      background-color: #d63384;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Teşekkürler!</h1>
+  <p>Siparişiniz başarıyla alınmıştır. Size en kısa sürede ulaşacağız.</p>
+  <a href="/">Anasayfaya Dön</a>
+</body>
+</html>
